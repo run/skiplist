@@ -20,9 +20,14 @@ typedef struct _skiplist {
 
 static node *create_node(int level, int key, object *obj)
 {
+	int i;
 	node *nd = (node *)malloc(sizeof(node) + level * sizeof(node *));
 	nd->obj = obj;
 	nd->key = key;
+	
+	for (i = 0; i < level; i++) {
+		nd->forward[i] = NULL;
+	}
 
 	return nd;
 }
@@ -102,7 +107,7 @@ static void delete_node(skiplist *sl, node *nd, node **update)
 		}
 	}
 
-	for (; i >= 0; i--) {
+	for (i = i - 1; i >= 0; i--) {
 		if (sl->head->forward[i] == NULL) {
 			sl->level--;
 		}
