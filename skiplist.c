@@ -96,7 +96,7 @@ void insert(skiplist *sl, int key, object *obj)
 static void delete_node(skiplist *sl, node *nd, node **update)
 {
 	int i;
-	for (i = 0; sl->head->forward[i] != NULL; i++) {
+	for (i = 0; i < sl->level; i++) {
 		if (update[i]->forward[i] == nd) {
 			update[i]->forward[i] = nd->forward[i];
 		}
@@ -122,6 +122,8 @@ void delete(skiplist *sl, int key)
 		update[i] = nd;
 	}
 
+	nd = nd->forward[0];
+
 	if (nd && nd->key == key) {
 		delete_node(sl, nd, update);
 		free_node(nd);
@@ -144,11 +146,11 @@ node *find(skiplist *sl, int key)
 	nd = nd->forward[0]; // because we use key < key, not key <= key 
 
 	if (nd && nd->key == key) {
-		printf("Found!, %d\n", nd->key);
+		printf("Found %d !!!\n", nd->key);
 		return nd;
 	}
 	else {
-		printf("Oops..., %d\n", nd->key);
+		printf("Oops... %d not found\n", nd->key);
 		return NULL;
 	}
 }
@@ -186,7 +188,19 @@ int main(void)
 
 	print(sl);
 
+	delete(sl, 2);
+	print(sl);
 	delete(sl, 5);
+	print(sl);
+
+	delete(sl, 45);
+	print(sl);
+
+	delete(sl, 19);
+	print(sl);
+
+	delete(sl, 7);
+	delete(sl, 12);
 
 	print(sl);
 
