@@ -5,7 +5,7 @@
 
 #define object int
 
-#define MAX_LEVEL 18
+#define MAX_LEVEL 8
 
 typedef struct _node {
 	int key;
@@ -128,27 +128,69 @@ void delete(skiplist *sl, int key)
 	}
 }
 
+node *find(skiplist *sl, int key)
+{
+	node *nd;
+	int i;
+
+	nd = sl->head;
+
+	for (i = sl->level - 1; i >= 0; i--) {
+		while (nd && nd->forward[i]->key < key) {
+			nd = nd->forward[i];
+		}
+	}
+
+	nd = nd->forward[0]; // because we use key < key, not key <= key 
+
+	if (nd && nd->key == key) {
+		printf("Found!, %d\n", nd->key);
+		return nd;
+	}
+	else {
+		printf("Oops..., %d\n", nd->key);
+		return NULL;
+	}
+}
+
+void print(skiplist *sl)
+{
+	node *nd;
+	int i;
+
+	for (i = 0; i <= MAX_LEVEL; i++) {
+		nd = sl->head->forward[i];
+		printf("Level[%d]:", i);
+
+		while (nd) {
+			printf("%d -> ", nd->key);
+			nd = nd->forward[i];
+		}
+		printf("\n");
+	}
+}
+
+		
 
 
+int main(void)
+{
+	skiplist *sl = create_skiplist();
 
+	insert(sl, 2, NULL);
+	insert(sl, 7, NULL);
+	insert(sl, 12, NULL);
+	insert(sl, 5, NULL);
+	insert(sl, 45, NULL);
+	insert(sl, 19, NULL);
 
+	print(sl);
 
+	delete(sl, 5);
 
+	print(sl);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	return 0;
+}
 
 
