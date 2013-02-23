@@ -1,6 +1,7 @@
 ## Skiplist written in C language.
 
 **Author**: Wang Runzhen
+
 **Date**  : 2013.2.22
 
 
@@ -14,4 +15,4 @@ lookup with efficiency comparable to balanced binary search trees
 
 ###Links:
 wikipedia.org: <http://en.wikipedia.org/wiki/Skip_list>
-
+myblog: <http://blog.nlogn.cn/skiplist>
