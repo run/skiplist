@@ -1,22 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
-#define object int
-
-#define MAX_LEVEL 8
-
-typedef struct _node {
-	int key;
-	object *obj;
-	struct _node *forward[1];
-} node;
-
-typedef struct _skiplist {
-	int level;
-	struct _node *head;
-} skiplist;
+#include "skiplist.h"
 
 static node *create_node(int level, int key, object *obj)
 {
@@ -176,40 +158,4 @@ void print(skiplist *sl)
 		printf("\n");
 	}
 }
-
-		
-
-
-int main(void)
-{
-	skiplist *sl = create_skiplist();
-
-	insert(sl, 2, NULL);
-	insert(sl, 7, NULL);
-	insert(sl, 12, NULL);
-	insert(sl, 5, NULL);
-	insert(sl, 45, NULL);
-	insert(sl, 19, NULL);
-
-	print(sl);
-
-	delete(sl, 2);
-	print(sl);
-	delete(sl, 5);
-	print(sl);
-
-	delete(sl, 45);
-	print(sl);
-
-	delete(sl, 19);
-	print(sl);
-
-	delete(sl, 7);
-	delete(sl, 12);
-
-	print(sl);
-
-	return 0;
-}
-
 
