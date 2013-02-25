@@ -21,13 +21,9 @@ typedef struct _skiplist {
 	struct _node *head;
 } skiplist;
 
-static node *create_node(int level, int key, object *obj);
 skiplist *create_skiplist(void);
-static void free_node(node *nd);
 void free_skiplist(skiplist *sl);
-static int random_level();
 void insert(skiplist *sl, int key, object *obj);
-static void delete_node(skiplist *sl, node *nd, node **update);
 void delete(skiplist *sl, int key);
 node *find(skiplist *sl, int key);
 void print(skiplist *sl);

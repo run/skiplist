@@ -29,5 +29,7 @@ int main(void)
 
 	print(sl);
 
+	free_skiplist(sl);
+
 	return 0;
 }

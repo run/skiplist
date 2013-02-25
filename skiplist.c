@@ -36,7 +36,18 @@ static void free_node(node *nd)
 
 void free_skiplist(skiplist *sl)
 {
+	node *nd, *next;
 
+	nd = sl->head->forward[0];
+	free_node(sl->head);
+
+	while (nd) {
+		next = nd->forward[0];
+		free_node(nd);
+		nd = next;
+	}
+
+	free(sl);
 }
 
 static int random_level()
@@ -52,9 +63,9 @@ static int random_level()
 void insert(skiplist *sl, int key, object *obj)
 {
 	node  *update[MAX_LEVEL];
-	node  *p, *q, *nd;
+	node  *nd;
 
-	int i, j, level;
+	int i, level;
 
 	nd = sl->head;
 
