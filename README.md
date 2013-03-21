@@ -15,4 +15,5 @@ lookup with efficiency comparable to balanced binary search trees
 
 ###Links:
 wikipedia.org: <http://en.wikipedia.org/wiki/Skip_list>
+
 myblog: <http://blog.nlogn.cn/skiplist>
