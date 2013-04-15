@@ -13,7 +13,6 @@ sparse subsequences of the items. These auxiliary lists allow item
 lookup with efficiency comparable to balanced binary search trees 
 (that is, with number of probes proportional to log n instead of n)
 
-###Links:
-wikipedia.org: <http://en.wikipedia.org/wiki/Skip_list>
-
-myblog: <http://blog.nlogn.cn/skiplist>
+##Links:
+* wikipedia.org: <http://en.wikipedia.org/wiki/Skip_list>
+* myblog: <http://blog.nlogn.cn/skiplist>
