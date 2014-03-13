@@ -16,13 +16,13 @@ static node *create_node(int level, int key, object *obj)
 
 skiplist *create_skiplist(void)
 {
-	int i;
+	// int i;
 	skiplist *sl = (skiplist *)malloc(sizeof(skiplist));
 	sl->head = create_node(MAX_LEVEL, 0, NULL);
 
-	for (i = 0; i < MAX_LEVEL; i++) {
-		sl->head->forward[i] = NULL;
-	}
+	// for (i = 0; i < MAX_LEVEL; i++) {
+	// 	sl->head->forward[i] = NULL;
+	// }
 
 	sl->level = 1;
 
