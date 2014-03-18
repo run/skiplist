@@ -26,7 +26,6 @@ int main(void)
 
 	delete(sl, 7);
 	delete(sl, 12);
-
 	print(sl);
 
 	free_skiplist(sl);
