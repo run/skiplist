@@ -16,16 +16,9 @@ static node *create_node(int level, int key, object *obj)
 
 skiplist *create_skiplist(void)
 {
-	// int i;
 	skiplist *sl = (skiplist *)malloc(sizeof(skiplist));
 	sl->head = create_node(MAX_LEVEL, 0, NULL);
-
-	// for (i = 0; i < MAX_LEVEL; i++) {
-	// 	sl->head->forward[i] = NULL;
-	// }
-
 	sl->level = 1;
-
 	return sl;
 }
 
@@ -57,7 +50,6 @@ static int random_level()
 		level += 1;
 	}
 	return (level < MAX_LEVEL) ? level : MAX_LEVEL;
-
 }
 
 void insert(skiplist *sl, int key, object *obj)
@@ -88,7 +80,6 @@ void insert(skiplist *sl, int key, object *obj)
 		nd->forward[i] = update[i]->forward[i];
 		update[i]->forward[i] = nd;
 	}
-
 }	
 
 static void delete_node(skiplist *sl, node *nd, node **update)
@@ -134,23 +125,19 @@ node *find(skiplist *sl, int key)
 	int i;
 
 	nd = sl->head;
-
 	for (i = sl->level - 1; i >= 0; i--) {
-		while (nd && nd->forward[i]->key < key) {
-			nd = nd->forward[i];
+		while (nd->forward[i] != NULL) {
+			if (nd->forward[i]->key < key) 
+				nd = nd->forward[i];
+			else if (nd->forward[i]->key == key)
+				return nd->forward[i];
+			else
+				break;
 		}
 	}
 
-	nd = nd->forward[0]; // because we use key < key, not key <= key 
-
-	if (nd && nd->key == key) {
-		printf("Found %d !!!\n", nd->key);
-		return nd;
-	}
-	else {
-		printf("Oops... %d not found\n", nd->key);
-		return NULL;
-	}
+	printf("Oops... %d not found\n", key);
+	return NULL;
 }
 
 void print(skiplist *sl)
