@@ -1,0 +1,903 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<!-- saved from url=(0104)https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Skip Lists</title>
+<meta name="description" content="Skip Lists">
+<meta name="keywords" content="skip_lists">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+
+
+<meta name="Generator" content="LaTeX2HTML v99.1 release">
+<meta http-equiv="Content-Style-Type" content="text/css">
+
+<link rel="STYLESHEET" href="./Skip Lists_files/skip_lists.css">
+
+</head>
+
+<body>
+<h1 align="CENTER">Skip Lists</h1>
+<p align="CENTER"><strong>Thomas A. Anastasio</strong></p>
+<p align="CENTER"><strong>22 November 1999</strong></p>
+
+<p>
+
+</p><h1><a name="SECTION00010000000000000000">
+Introduction</a>
+</h1>
+
+<p>
+Skip Lists were developed around 1989 by William
+Pugh<a name="tex2html1" href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#foot13"><sup>1</sup></a> of the
+University of Maryland.  Professor Pugh sees Skip Lists as a viable
+alternative to balanced trees such as AVL trees or to self-adjusting 
+trees such as splay trees.
+
+</p><p>
+The <tt> find</tt>, <tt> insert</tt>, and <tt> remove</tt> operations on ordinary
+binary search trees are efficient, <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$">, when the input data is
+random; but less efficient, <img width="39" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img3.gif" alt="$O(n)$">, when the input data are ordered.
+Skip List performance for these same operations and for any data set
+is about as good as that of randomly-built binary search trees -
+namely <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$">
+
+</p><p>
+In an ordinary sorted linked list, <tt> find</tt>, <tt> insert</tt>, and
+<tt> remove</tt> are in <img width="39" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img3.gif" alt="$O(n)$"> because the list must be scanned
+node-by-node from the head to find the relevant node.  If somehow we
+could scan down the list in bigger steps (``skip'' down, as it were),
+we would reduce the cost of scanning.   This is the fundamental idea
+behind Skip Lists. 
+
+</p><p>
+In simple terms, Skip Lists are sorted linked lists with two differences:
+
+</p><ol>
+<li>the nodes in an ordinary list have one 'next' reference.   The
+nodes in a Skip List have many 'next' references (called <em> forward</em>
+references).</li>
+<li>the number of forward references for a given node is determined
+probabilistically.</li>
+</ol>
+
+<p>
+We speak of a Skip List node having <em> level</em>s, one level per
+forward reference.  The number of levels in a node is called the 
+<em> size</em> of the node.
+
+</p><p>
+In an ordinary sorted list, <tt> insert</tt>,<tt> remove</tt>, and <tt> find</tt>
+operations require sequential traversal of the list.  This results in
+<img width="39" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img3.gif" alt="$O(n)$"> performance per operation.  Skip Lists allow intermediate nodes
+in the list to be ``skipped'' during a traversal - resulting in an
+<em> expected</em> performance of <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$"> per operation.
+
+</p><p>
+
+</p><h2><a name="SECTION00011000000000000000">
+The Basic Idea</a>
+</h2>
+
+<p>
+To introduce the Skip List data structure, let's look at three list
+data structures that allow skipping, but are not truly Skip Lists.
+The first of these, shown in Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:skip2">1</a> allows every
+other node to be skipped in a traversal.  The second, shown in
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:skip4">2</a> additionally allows every fourth node to be
+skipped.  The third, shown in Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a> additionally
+allows every eighth node to be skipped, but suggests further
+development of the idea to skipping every <img width="18" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img1.gif" alt="$2^i$">-th node.
+
+</p><p>
+For all three pseudo-skip-lists, there is a header node and the nodes
+do not all have the same number of forward references. Every node has
+a reference to the next node, but some have additional references to 
+nodes further along the list.
+
+</p><p>
+Here is pseudo-code for the <tt> find</tt> operation on each list.
+This same algorithm will be used with real Skip Lists later.
+
+</p><p>
+ 
+<a name="skip:page:find"></a></p><pre> 
+   Comparable &amp; find(const Comparable &amp; X)
+    {
+     node = header node
+     for (reference level of node from (nodesize - 1) down to 0)
+       while (the node referred to is less than X)
+           node = node referred to
+     if (node referred to has value X)
+       return node's value
+     else
+      return item_not_found
+    }
+</pre>
+
+<p>
+We start at the highest level of the header node and follow the
+references along this level until the value at the node referred to is
+equal to or larger than <tt> X</tt>.  At this point, we switch to the next
+lower level and continue the search.  Eventually, we shall be dealing
+with a reference at the lowest level of a node.  If the next node has
+the value <tt> X</tt>, then we return that value; otherwise we return a
+value that signals unsuccessful search.
+
+</p><p>
+
+</p><h3><a name="SECTION00011100000000000000">
+Skip Every Second Node</a>
+</h3>
+
+<p>
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:skip2">1</a> shows a 16-node list in which every second 
+node has a reference two nodes ahead.  The value stored at each node
+is shown below it (and corresponds in this example to the position of
+the node in the list).  The header node has two levels; it's no
+smaller than largest node in the list.  Node&nbsp;2 has a reference to
+node&nbsp;4, two nodes ahead. Similarly for nodes&nbsp;4, 6, 8, <i> etc</i> -
+every second node has a reference two nodes ahead.
+
+</p><p>
+
+</p><p></p>
+<div align="CENTER"><a name="skip:skip2"></a><a name="44"></a>
+<table>
+<caption align="BOTTOM"><strong>Figure 1:</strong>
+Skip Every 2nd Node</caption>
+<tbody><tr><td><img width="556" height="56" border="0" src="./Skip Lists_files/img4.gif" alt="\begin{figure}\centering\leavevmode
+{\framebox [\textwidth]
+{\psfig{figure=Figures/skip_lists_intro_2node.eps,width=0.9\textwidth}}}
+\end{figure}"></td></tr>
+</tbody></table>
+</div><p></p>
+
+<p>
+It's clear that the <tt> find</tt> operation does not need to visit
+each node.  It can skip over every other node, then do a final visit
+at the end.  The number of nodes visited is therefore no more than
+
+<!-- MATH
+ $\lceil\frac{n}{2}\rceil + 1$
+ -->
+<img width="58" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img5.gif" alt="$\lceil\frac{n}{2}\rceil + 1$">.  For example, the nodes visited in
+scanning for the node with value&nbsp;<tt> 15</tt> would be 
+<tt> 2, 4, 6, 8, 10, 12, 14, 16, 15</tt>, 
+a total of 
+<!-- MATH
+ $(\lceil\frac{16}{2}\rceil + 1) = 9$
+ -->
+<img width="104" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img6.gif" alt="$(\lceil\frac{16}{2}\rceil + 1) = 9$">.
+
+</p><p>
+Follow the algorithm for <tt> find</tt> on
+page&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:page:find"><img align="BOTTOM" border="1" alt="[*]" src="./Skip Lists_files/cross_ref_motif.gif"></a> for this simple example to be sure
+you understand it thoroughly.
+
+</p><p>
+
+</p><h3><a name="SECTION00011200000000000000">
+Skip Every Second and Fourth Node</a>
+</h3>
+
+<p>
+The second example is a list in which every second node has a
+reference two nodes ahead and additionally every fourth node has a
+reference four nodes ahead.  Such a list is shown in
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:skip4">2</a>.  The header is still no smaller than the
+largest node in the list.  
+
+</p><p>
+
+</p><p></p>
+<div align="CENTER"><a name="skip:skip4"></a><a name="60"></a>
+<table>
+<caption align="BOTTOM"><strong>Figure 2:</strong>
+Skip Every 2nd and 4th Node</caption>
+<tbody><tr><td><img width="556" height="71" border="0" src="./Skip Lists_files/img7.gif" alt="\begin{figure}\centering\leavevmode
+{\framebox [\textwidth]
+{\psfig{figure=Figures/skip_lists_intro_4node.eps,width=0.9\textwidth}}}
+\end{figure}"></td></tr>
+</tbody></table>
+</div><p></p>
+
+<p>
+The <tt> find</tt> operation can now make bigger skips than those for
+the list in Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:skip2">1</a>.  Every fourth node is skipped
+until the search is confined between two nodes of size&nbsp;3.  At this
+point, as many as three nodes may need to be scanned.  It is also
+possible that some nodes will be visited more than once using the
+algorithm on page&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:page:find"><img align="BOTTOM" border="1" alt="[*]" src="./Skip Lists_files/cross_ref_motif.gif"></a>. The
+number  of nodes visited<a name="tex2html4" href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#foot237"><sup>2</sup></a>  is no more than 
+<!-- MATH
+ $\lceil\frac{n}{4}\rceil + 3$
+ -->
+<img width="58" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img9.gif" alt="$\lceil\frac{n}{4}\rceil + 3$">. As an
+example, look at the nodes visited in scanning for the node with value
+of&nbsp;15. These are <tt> 4, 8, 12, 16, 14, 16, 15</tt> for a total of
+
+<!-- MATH
+ $(\lceil\frac{16}{4}\rceil + 3) = 7$
+ -->
+<img width="104" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img10.gif" alt="$(\lceil\frac{16}{4}\rceil + 3) = 7$">. 
+
+</p><p>
+
+</p><h3><a name="SECTION00011300000000000000">
+Skip Every <img width="18" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img1.gif" alt="$2^i$">-th Node</a>
+</h3>
+
+<p>
+This final example is for a list in which some skip lengths are even
+larger.  
+
+</p><p>
+
+</p><p></p>
+<div align="CENTER"><a name="skip:intro"></a><a name="76"></a>
+<table>
+<caption align="BOTTOM"><strong>Figure 3:</strong>
+Skip Every <img width="18" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img1.gif" alt="$2^i$">-th Node</caption>
+<tbody><tr><td><img width="556" height="136" border="0" src="./Skip Lists_files/img11.gif" alt="\begin{figure}\centering\leavevmode
+{\framebox [\textwidth]
+{\psfig{figure=Figures/skip_lists_intro.eps,width=0.9\textwidth}}}
+\end{figure}"></td></tr>
+</tbody></table>
+</div><p></p>
+
+<p>
+Every <img width="18" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img1.gif" alt="$2^i$">-th node, 
+<!-- MATH
+ $i = 1, \ldots \lceil \lg n \rceil$
+ -->
+<img width="106" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img12.gif" alt="$i = 1, \ldots \lceil \lg n \rceil$">, has
+a forward reference <img width="18" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img1.gif" alt="$2^i$"> nodes ahead.  For example, every 
+<img width="27" height="17" align="BOTTOM" border="0" src="./Skip Lists_files/img13.gif" alt="$2^{\rm nd}$"> node has a reference 2&nbsp;nodes ahead; every <img width="25" height="18" align="BOTTOM" border="0" src="./Skip Lists_files/img14.gif" alt="$8^{\rm th}$">
+node has a reference 8&nbsp;nodes ahead, <i> etc.</i>
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a> shows a short list of this type.  Once again,
+the header is no smaller than the largest node on the list.  It is
+shown arbitrarily large in the Figure.  
+
+</p><p>
+Suppose the Skip List in Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a> contained 32&nbsp;nodes
+and consider a search in it.  Working down from the
+highest level, we first encounter node&nbsp;16 and have cut the search in
+half.  We then search again, one level down in either the left or
+right half of the list, again cutting the remaining search in half.
+We continue in this manner till we find the sought-after node (or
+not). This is quite reminiscent of binary search in an array and is
+perhaps the best way to intuitively understand why the maximum number
+of nodes visited in this list is in <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$">.
+
+</p><p>
+This data structure is looking pretty good, but there's a serious
+problem with it for the <tt> insert</tt> and <tt> remove</tt> operations.  The
+work required to reorganize the list after an insertion or deletion is
+in <img width="39" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img3.gif" alt="$O(n)$">.  For example, suppose that the first element is removed in
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a>.  Since it is necessary to maintain the strict
+pattern of node sizes, values from&nbsp;2 to the end must be moved
+toward the head and the end node must be removed.  A similar situation
+occurs when a new element is added to the list.
+
+</p><p>
+This is where the probabilistic approach of a true Skip List comes
+into play.  A Skip List is built with the same <em> distribution</em> of
+node sizes, but without the requirement for the rigid pattern of node
+sizes shown.  It is no longer necessary to maintain the rigid pattern by
+moving values around after a <tt> remove</tt> or <tt> insert</tt> operation.  Pugh
+shows that <em> with high probability</em> such a list still exhibits
+<img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$"> behavior.  The probability that a given Skip List will
+perform badly is very small.
+
+</p><p>
+
+</p><h1><a name="SECTION00020000000000000000">
+Skip Lists - the Probabilistic Approach</a>
+</h1>
+
+<p>
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:example1">4</a> shows the list of Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a>
+with the nodes reorganized.  The distribution of node sizes is exactly
+the same as that of Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:intro">3</a>; the nodes just occur in a
+different pattern. In this example, the pattern would require
+that 50% of the nodes have just one reference, 25% have just two
+references, 12.5% have just three references, <i> etc</i>.
+The distribution of node sizes is maintained, but the strict order is
+not required.
+
+</p><p>
+
+</p><p></p>
+<div align="CENTER"><a name="skip:example1"></a><a name="98"></a>
+<table>
+<caption align="BOTTOM"><strong>Figure 4:</strong>
+A Probabilistic Skip List</caption>
+<tbody><tr><td><img width="556" height="141" border="0" src="./Skip Lists_files/img15.gif" alt="\begin{figure}\centering\leavevmode
+{\framebox [\textwidth]
+{\psfig{figure=Figures/skip_example_1.eps,width=0.9\textwidth}}}
+\end{figure}"></td></tr>
+</tbody></table>
+</div><p></p>
+
+<p>
+Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:example1">4</a> shows one way this might work out.  Of
+course, this is probabilistic, so there are many other possible node
+sequences that would satisfy the required probability distribution.
+
+</p><p>
+When inserting new nodes, we choose the size of the new node
+probabilistically.  Every Skip List has an associated (and fixed)
+probability <img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$"> that determines the distribution of nodes.  A fraction
+<img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$"> of the nodes that have at least <img width="12" height="13" align="BOTTOM" border="0" src="./Skip Lists_files/img17.gif" alt="$r$"> references also have <img width="39" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img18.gif" alt="$r + 1$">
+references.  The Skip List does not have to be reorganized when a new
+element is inserted.
+
+</p><p>
+
+</p><h2><a name="SECTION00021000000000000000"></a>
+<a name="skip:subsect:node_distr"></a>
+<br>
+An Aside on Node Distribution
+</h2>
+
+<p>
+Suppose we have an infinitely-long Skip List with associated
+probability <img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$">.  This means that a fraction, <img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$">, of the nodes with a
+forward reference at level <img width="10" height="14" align="BOTTOM" border="0" src="./Skip Lists_files/img19.gif" alt="$i$"> <i> also</i> have a forward reference at
+level <img width="37" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img20.gif" alt="$i + 1$">.
+
+</p><p>
+Let <img width="23" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img21.gif" alt="$L_k$"> be the fraction of nodes having <i> precisely</i> <img width="13" height="14" align="BOTTOM" border="0" src="./Skip Lists_files/img22.gif" alt="$k$"> forward
+references (<i> i.e.</i>, <img width="23" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img21.gif" alt="$L_k$"> is the fraction of nodes of size <img width="13" height="14" align="BOTTOM" border="0" src="./Skip Lists_files/img22.gif" alt="$k$">).
+Then, 
+<!-- MATH
+ $L_k = p L_{k-1}$
+ -->
+<img width="87" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img23.gif" alt="$L_k = p L_{k-1}$"> and
+<br></p><p></p>
+<div align="CENTER">
+
+<!-- MATH
+ \begin{displaymath}
+L_1 = 1 - \sum_{i=2}^\infty L_i
+\end{displaymath}
+ -->
+
+
+<img width="107" height="53" border="0" src="./Skip Lists_files/img24.gif" alt="\begin{displaymath}L_1 = 1 - \sum_{i=2}^\infty L_i \end{displaymath}">
+</div>
+<br clear="ALL">
+<p></p>
+
+<p>
+Since 
+<br></p><p></p>
+<div align="CENTER">
+
+<!-- MATH
+ \begin{displaymath}
+\sum_{i=2}^\infty L_i =L_2 + L_3 + \cdots =L_2 + pL_2 + p^2L_2 +\cdots
+\end{displaymath}
+ -->
+
+
+<img width="332" height="53" border="0" src="./Skip Lists_files/img25.gif" alt="\begin{displaymath}\sum_{i=2}^\infty L_i =L_2 + L_3 + \cdots =L_2 + pL_2 + p^2L_2 +\cdots \end{displaymath}">
+</div>
+<br clear="ALL">
+<p></p>
+we can write <img width="22" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img26.gif" alt="$L_1$"> in terms of <img width="22" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img27.gif" alt="$L_2$"> as 
+<br><p></p>
+<div align="CENTER">
+
+<!-- MATH
+ \begin{displaymath}
+L_1 = 1 - L_2 \sum_{i=0}^\infty p^i
+\end{displaymath}
+ -->
+
+
+<img width="125" height="53" border="0" src="./Skip Lists_files/img28.gif" alt="\begin{displaymath}L_1 = 1 - L_2 \sum_{i=0}^\infty p^i\end{displaymath}">
+</div>
+<br clear="ALL">
+<p></p>
+
+<p>
+Recall that 
+<!-- MATH
+ $\sum_{i=0}^\infty p^i$
+ -->
+<img width="58" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img29.gif" alt="$\sum_{i=0}^\infty p^i$"> is the sum of the geometric
+progression with first term <img width="12" height="13" align="BOTTOM" border="0" src="./Skip Lists_files/img30.gif" alt="$1$"> and common ratio <img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$">.  Thus, 
+<br></p><p></p>
+<div align="CENTER">
+
+<!-- MATH
+ \begin{displaymath}
+\sum_{i=0}^\infty p^i = \frac{1}{1 - p}
+\end{displaymath}
+ -->
+
+
+<img width="98" height="53" border="0" src="./Skip Lists_files/img31.gif" alt="\begin{displaymath}\sum_{i=0}^\infty p^i = \frac{1}{1 - p} \end{displaymath}">
+</div>
+<br clear="ALL">
+<p></p>
+
+<p>
+Therefore, 
+<!-- MATH
+ $L_1 = 1 - \frac{L_2}{1-p}$
+ -->
+<img width="97" height="36" align="MIDDLE" border="0" src="./Skip Lists_files/img32.gif" alt="$L_1 = 1 - \frac{L_2}{1-p}$">.  Since <img width="69" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img33.gif" alt="$L_2 = pL_1$">, we can
+write
+<br></p><p></p>
+<div align="CENTER">
+
+<!-- MATH
+ \begin{displaymath}
+L_1 = 1 - \frac{pL_1}{1 - p} \Rightarrow L_1 = 1 - p
+\end{displaymath}
+ -->
+
+
+<img width="206" height="42" border="0" src="./Skip Lists_files/img34.gif" alt="\begin{displaymath}L_1 = 1 - \frac{pL_1}{1 - p} \Rightarrow L_1 = 1 - p \end{displaymath}">
+</div>
+<br clear="ALL">
+<p></p>
+
+<p>
+Example: In the situation shown in Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:example1">4</a>, 
+<img width="54" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img35.gif" alt="$p = 0.5$">.  Therefore, 
+<!-- MATH
+ $1 - \frac{1}{2} = \frac{1}{2}$
+ -->
+<img width="73" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img36.gif" alt="$1 - \frac{1}{2} = \frac{1}{2}$"> of the nodes
+with at least one reference have two references; one-half of those
+with at least two references have three references, <i> etc</i>.
+
+</p><p>
+You should work out the distribution for a <tt> SkipList</tt> with
+associated probability of <img width="14" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img37.gif" alt="$\frac{1}{4}$"> to be sure you 
+understand how distributions are computed.
+
+</p><p>
+
+</p><h2><a name="SECTION00022000000000000000">
+Choosing a Node Probabilistically</a>
+</h2>
+When a new node is needed for a <tt> insert</tt> operation, the size
+of the node is chosen by consulting a random number generator
+<tt> r</tt>. Here is one way to do this for a Skip List with associated
+probability <tt> p</tt> and maximum node level <tt> maxLevel</tt>
+
+<p>
+ 
+</p><pre>
+   int generateNodeLevel(double p, int maxLevel)
+   {
+    int level = 1;
+   
+    while (drand48() &lt; p)
+      level++;
+    return (level &gt; maxLevel) ? maxLevel : level;
+   }
+</pre>
+
+<p>
+Note that the level of the new node is independent of the number of
+nodes already in the Skip List.  Each node is chosen only on the basis
+of the Skip List's associated probability.
+
+</p><p>
+When the associated probability is <img width="12" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img16.gif" alt="$p$">, the average number of comparisons
+that must be done for <tt> find</tt>, is 
+
+<!-- MATH
+ $1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}$
+ -->
+<img width="118" height="53" align="MIDDLE" border="0" src="./Skip Lists_files/img38.gif" alt="$1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}$">. 
+For example, for a list of size 65,536, the average number of nodes to be
+examined is 34.3 for 
+<!-- MATH
+ $p = \frac{1}{4}$
+ -->
+<img width="44" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img39.gif" alt="$p = \frac{1}{4}$"> and 35 for 
+<!-- MATH
+ $p = \frac{1}{2}$
+ -->
+<img width="44" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img40.gif" alt="$p = \frac{1}{2}$">.
+This is a tremendous improvement over an ordinary sorted list for which
+the average number of comparisons is 
+<!-- MATH
+ $\frac{n}{2} = 32768$
+ -->
+<img width="77" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img41.gif" alt="$\frac{n}{2} = 32768$">.
+
+</p><p>
+
+</p><h2><a name="SECTION00023000000000000000">
+Determining the Header's Level</a>
+</h2>
+
+<p>
+The level of the header node is the maximum allowed level in the
+<tt> SkipList</tt> and is chosen at construction.  
+Pugh shows that the maximum level should be chosen as
+
+<!-- MATH
+ $\log_\frac{1}{p} n$
+ -->
+<img width="48" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img42.gif" alt="$\log_\frac{1}{p} n$">.  Thus, for 
+<!-- MATH
+ $p = \frac{1}{2}$
+ -->
+<img width="44" height="34" align="MIDDLE" border="0" src="./Skip Lists_files/img40.gif" alt="$p = \frac{1}{2}$">, the maximum
+level for a <tt> SkipList</tt> of up to 65,536 elements should be chosen
+no smaller than  
+<!-- MATH
+ $\lg_2 65536 = 16$
+ -->
+<img width="104" height="29" align="MIDDLE" border="0" src="./Skip Lists_files/img43.gif" alt="$\lg_2 65536 = 16$">. 
+
+</p><p>
+
+</p><h2><a name="SECTION00024000000000000000">
+Performance Considerations</a>
+</h2>
+The <i> expected</i> time to find an element (and therefore to insert or
+delete an element) is in <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$">.  It is possible for the time to
+be substantially larger if the configuration of node levels is
+unfavorable for a particular operation.  
+Since the node sizes are generated randomly, it is possible to get a
+``bad'' run of sizes.  For example, it is possible that each node will
+be generated at the same size, producing the equivalent of an ordinary
+sorted list.  A bad run of sizes will result in longer-than
+expected search (and therefore <tt> insert</tt> or <tt> remove</tt>) times; the
+<tt> SkipList</tt> will simply not be as efficient as expected.
+Obviously, a bad run will be proportionataly less important in a long 
+<tt> SkipList</tt> than in a short one.  The probability of poor
+performance decreases rapidly with the number of nodes (i.e., list
+size).  
+
+<p>
+The probability that an operation will take longer than expected is a
+function of the probability associated with the list.  For example,
+Pugh calculates that for a list with <img width="54" height="28" align="MIDDLE" border="0" src="./Skip Lists_files/img35.gif" alt="$p = 0.5$"> and 4096 elements, the
+probability that the actual time will exceed the expected time by a
+factor of 3 is less than one in 200&nbsp;million.
+
+</p><p>
+The relative time and space performance of a Skip List depends on the
+probability level associated with the list. Pugh suggests that a
+probability of 0.25 be used in most cases.  If the variability of
+performance is important, he suggests using a probability of 0.5
+(variability decreases with increasing probability).  Interestingly,
+the average number of references per node is only 1.33 when a
+probability of 0.25 is used.   A binary search tree, of course, has 2
+references per node, so Skip Lists can be more space-efficient.
+
+</p><p>
+
+</p><h1><a name="SECTION00030000000000000000">
+Implementation of Skip Lists</a>
+</h1>
+The implementation embeds the <tt> SkipListNode</tt> class as a private
+member of <tt> SkipList</tt>. 
+<br>
+<br>
+
+<p>
+ 
+<table width="95%">
+<tbody><tr><td>
+<a name="skip:page:implem"></a><pre>
+template &lt;class Comparable&gt;
+class SkipList
+{
+private:
+  // embedded node
+  class SkipListNode
+  {
+  public:
+    void setDatum(const Comparable &amp; datum);
+    void setForward(int i, SkipListNode * f);
+    void setSize(int sz);
+    SkipListNode(); // 16 levels, Comparable() for datum
+    SkipListNode(const Comparable &amp; datum, int levels);
+    SkipListNode(const SkipListNode &amp;);
+    ~SkipListNode();
+
+    const Comparable &amp; getDatum() const;
+    int getSize() const;
+    SkipListNode * getForward(int level);
+  private:
+    int _levels;  // number of levels in this node
+    vector&lt;SkipListNode *&gt; _forward;  // forward pointers
+    Comparable _datum;  // datum stored at this node
+  }; // SkipListNode
+</pre>
+    <i> continued below</i>
+</td></tr>
+</tbody></table>
+
+</p><p>
+ 
+<table width="95%">
+<tbody><tr><td>
+   <i> SkipList implementation continued</i>
+<pre>
+public:
+  SkipList(); // use max_node_size of 16, prob of 0.25
+  SkipList(int max_node_size, double probab);
+  SkipList(const SkipList &amp;);
+  ~SkipList();
+
+  int getHighNodeSize() const; // size of the node with most levels
+  int getMaxNodeSize() const; // max node size allowed in this list
+  double getProbability() const; // prob for this list
+
+  // insert item into this skiplist.
+  void insert(const Comparable &amp; item);
+
+  // Search for item in skiplist.  If found, return the item with
+  // success equal true.  Otherwise, return a dummy item with
+  // success equal false.
+  const Comparable &amp; find(const Comparable &amp; item, bool &amp; success);
+
+  // remove the first occurrence of the specified item
+  void remove(const Comparable &amp; item);  
+private:
+  // Search for item in this skiplist, starting at startnode
+  // startnode will usually be the header.  If item is found, 
+  // return the node at which it is found with success equal true.
+  // Otherwise, return the preceding node with success equal false.
+  // Precondition:  startnode is not NULL
+  SkipListNode * find(const Comparable &amp; item, 
+		      SkipListNode * startnode);
+
+  // Accessor for _head
+  SkipListNode * getHeader() const; // return the header node
+</pre>
+    <i> continued below</i>
+</td></tr>
+</tbody></table>
+
+</p><p>
+ 
+<table width="95%">
+<tbody><tr><td>
+   <i> SkipList implementation continued</i>
+<pre>
+  // Finds the point at which item would be inserted using a node
+  // of the given size.
+  // Returns a "lookback" node that has each of its forward 
+  // pointers set to the closest node (toward the header) at that level.
+  SkipListNode * findInsertPoint(const Comparable &amp; item, 
+				 int nodesize);
+
+  // insert item into this skiplist, using a node of the 
+  // specified size. success returned true if insertion succeeds
+  void insert(const Comparable &amp; item, int nodesize, bool &amp; success);
+
+  int _high_node_size;  // highest-level node now in this list
+  int _max_node_size;  // highest-level node allowed in this list
+  double _prob;  // probability associated with this list
+  SkipListNode * _head;  // header node of this list
+};  // SkipList
+</pre></td></tr>
+</tbody></table>
+
+</p><p>
+
+</p><h1><a name="SECTION00040000000000000000">
+Overview of <tt> SkipList</tt> Methods</a>
+</h1>
+
+<p>
+We will examine <tt> SkipList</tt> methods <tt> insert</tt>, and
+<tt> remove</tt> in some detail below.  Pseudocode
+for <tt> find</tt> was given on page&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:page:find"><img align="BOTTOM" border="1" alt="[*]" src="./Skip Lists_files/cross_ref_motif.gif"></a>.
+
+</p><p>
+Insertion and deletion involve searching the <tt> SkipList</tt> to find
+the insertion or deletion point, then manipulating the references to
+make the relevant change.
+
+</p><p>
+When inserting a new element, we first generate a node that has had
+its level selected randomly.  The <tt> SkipList</tt> has a maximum
+allowed level set at construction time.  The number of levels in the
+header node is the maximum allowed.  For convenience in searching, the
+<tt> SkipList</tt> keeps track of the maximum level  actually in
+the list.  There is no need to search levels above this actual maximum.
+
+</p><p>
+
+</p><h2><a name="SECTION00041000000000000000">
+<tt> findInsertPoint</tt> Method</a>
+</h2>
+In an ordinary linked list, insertion and deletion require having a
+pointer to the previous node.  Insertion is done after this
+previous node, deletion deletes the node following the previous node.
+We call the point in the list after the previous node, the 
+<i> insertion point</i>, even if we are doing deletions.  Finding the
+insertion point is the first step in doing an insertion or a
+deletion.
+
+<p>
+In Skip Lists, we need pointers to all the <i> see-able</i> previous nodes
+between the insertion point and the header.  Imagine standing at
+the insertion point, looking back toward the header.  All the nodes
+you can see are the see-able nodes.  Some nodes may not be see-able
+because they are blocked by higher nodes. Figure&nbsp;<a href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:update">5</a>
+shows an example. 
+
+</p><p>
+
+</p><p></p>
+<div align="CENTER"><a name="skip:update"></a><a name="200"></a>
+<table>
+<caption align="BOTTOM"><strong>Figure 5:</strong>
+Update Node Example</caption>
+<tbody><tr><td><img width="556" height="126" border="0" src="./Skip Lists_files/img44.gif" alt="\begin{figure}\centering\leavevmode
+{\framebox [\textwidth]
+{\psfig{figure=Figures/skip_update.eps,width=0.9\textwidth}}}
+\end{figure}"></td></tr>
+</tbody></table>
+</div><p></p>
+
+<br>
+<br>
+
+<p>
+ 
+<table width="95%">
+<tbody><tr><td>
+In the figure, the insertion point is between nodes&nbsp;6 and&nbsp;7.  Looking
+back toward the header, the nodes you can see at the various levels
+are
+<pre>
+  level  node seen
+    0      6
+    1      6
+    2      4
+    3      header
+</pre></td></tr>
+</tbody></table>
+<br>
+<br> 
+
+</p><p>
+We construct a <tt> backLook</tt> node that has its forward pointers set
+to the relevant see-able nodes.  This is the type of node returned by
+the <tt> findInsertPoint</tt> method.
+
+</p><p>
+
+</p><h2><a name="SECTION00042000000000000000">
+<tt> insert</tt> Method</a>
+</h2>
+Once we have the backLook node returned by <tt> findInsertPoint</tt>
+and have constructed the new node to be inserted, doing an insertion
+is easy.  Here's how. 
+
+<p>
+The public <tt> insert(const&nbsp;Comparable&nbsp;&amp;)</tt> method decides on the new
+node's size by random choice, then calls the overloading private method
+<br>
+<tt> insert(const&nbsp;Comparable&nbsp;&amp;,int,bool&nbsp;&amp;)</tt> to do all the work.
+<br>
+<br>
+
+</p><p>
+ 
+<table width="95%">
+<tbody><tr><td>
+<pre>
+template&lt;class T&gt;
+void 
+SkipList&lt;T&gt;::insert(const T &amp; item)
+{
+  int nodesize = randomNodeSize(getProbability(), getMaxNodeSize());
+  insert(item, nodesize);
+}
+</pre></td></tr>
+</tbody></table>
+<br>
+<br>
+
+</p><p>
+ 
+<table width="95%">
+<tbody><tr><td>
+This is the private <tt> insert</tt> method.
+<br>
+<br>
+
+<p>
+ 
+</p><pre>
+template&lt;class T&gt;
+void 
+SkipList&lt;T&gt;::insert(const T &amp; item, int nodesize)
+{
+  SkipList&lt;T&gt;::SkipListNode * backLook = findInsertPoint(item, nodesize);
+  SkipList&lt;T&gt;::SkipListNode * newnode = 
+    new SkipList&lt;T&gt;::SkipListNode(item, nodesize);
+
+  // newnode may have more levels than are currently in list
+  // If so, adjust high_node_size of list.
+  if (nodesize &gt; getHighNodeSize())
+    setHighNodeSize(nodesize);
+
+  //  Rearrange the relevant previous pointers using information
+  //  in the backLook node.
+  for (int i = 0; i &lt; nodesize; i++)
+    {
+      SkipList&lt;T&gt;::SkipListNode * prev = backLook-&gt;getForward(i);
+      SkipList&lt;T&gt;::SkipListNode * next = prev-&gt;getForward(i);
+      newnode-&gt;setForward(i, next);
+      prev-&gt;setForward(i, newnode);
+    }
+
+  incrementListSize();
+}
+</pre></td></tr>
+</tbody></table>
+
+</p><p>
+
+</p><h2><a name="SECTION00043000000000000000">
+<tt> remove</tt> Method</a>
+</h2>
+The <tt> remove</tt> method is entirely analogous to the <tt> insert</tt>
+method.  It uses the backLook node returned by <tt> findInsertPoint</tt>
+to reassign the previous nodes' pointers around the node to be removed.
+
+<p>
+
+</p><h1><a name="SECTION00050000000000000000">
+About this document ...</a>
+</h1>
+ <strong>Skip Lists</strong><p>
+This document was generated using the
+<a href="http://www-dsed.llnl.gov/files/programs/unix/latex2html/manual/"><strong>LaTeX</strong>2<tt>HTML</tt></a> translator Version 99.1 release (March 30, 1999)
+</p><p>
+Copyright © 1993, 1994, 1995, 1996,
+<a href="http://cbl.leeds.ac.uk/nikos/personal.html">Nikos Drakos</a>, 
+Computer Based Learning Unit, University of Leeds.
+<br>
+Copyright © 1997, 1998, 1999,
+<a href="http://www.maths.mq.edu.au/~ross/">Ross Moore</a>, 
+Mathematics Department, Macquarie University, Sydney.
+</p><p>
+The command line arguments were: <br>
+ <strong>latex2html</strong> <tt>-split 0 -no_navigation skip_lists.tex</tt>
+</p><p>
+The translation was initiated by Thomas Anastasio on 2000-02-19
+<br></p><hr><h4>Footnotes</h4>
+<dl>
+<dt><a name="foot13">...
+Pugh</a><a name="foot13" href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#tex2html1"><sup>1</sup></a>
+</dt><dd>Communications of the ACM, June 1990, pp 668-676
+
+</dd><dt><a name="foot237">... visited</a><a name="foot237" href="https://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#tex2html4"><sup>2</sup></a>
+</dt><dd>This is not the same value given by
+Pugh who may not have counted multiple visits to a node. Pugh's value
+is 
+<!-- MATH
+ $\lceil\frac{n}{4}\rceil + 2$
+ -->
+<img width="58" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img8.gif" alt="$\lceil\frac{n}{4}\rceil + 2$">. This difference in the additive
+constant does not change the conclusion of <img width="54" height="31" align="MIDDLE" border="0" src="./Skip Lists_files/img2.gif" alt="$O(\lg n)$"> performance for 
+Skip Lists.
+
+</dd></dl>
+<br><hr>
+<address>
+<i>Thomas Anastasio</i>
+<br><i>2000-02-19</i>
+</address>
+
+
+</body></html>
