@@ -1,4 +1,6 @@
 ## Skiplist written in C language.
+[![Build Status](https://travis-ci.org/run/skiplist.svg?branch=master)](https://travis-ci.org/run/skiplist)
+
 
 **What's skiplist ?**
 
@@ -11,4 +13,3 @@ lookup with efficiency comparable to balanced binary search trees
 ## Reference:
 * wikipedia.org: <http://en.wikipedia.org/wiki/Skip_list>
 
-**Date**  : 2013.2.22
