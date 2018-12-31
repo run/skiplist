@@ -1,0 +1,8 @@
+language: c
+script:
+    cd ./src/
+    make 
+compiler: 
+    - clang
+    - gcc 
+            
